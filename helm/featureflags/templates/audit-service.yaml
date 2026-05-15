@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: audit-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: audit-service
+  template:
+    metadata:
+      labels:
+        app: audit-service
+    spec:
+      containers:
+        - name: audit-service
+          image: "{{ (index .Values "audit-service").image.repository }}:{{ (index .Values "audit-service").image.tag }}"
+          ports:
+            - containerPort: {{ .Values.service.auditPort }}
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: featureflags-secrets
+                  key: DATABASE_URL
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: {{ .Values.service.auditPort }}
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: {{ .Values.service.auditPort }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: audit-service
+spec:
+  selector:
+    app: audit-service
+  ports:
+    - port: {{ .Values.service.auditPort }}
+      targetPort: {{ .Values.service.auditPort }}

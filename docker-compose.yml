@@ -1,0 +1,75 @@
+services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: featureflags
+      POSTGRES_DB: postgres
+    ports:
+      - "5433:5432"
+    volumes:
+      - audit_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 3s
+      timeout: 5s
+      retries: 5
+
+  flags-service:
+    build: ./flags-service
+    environment:
+      - REDIS_URL=redis://redis:6379
+    ports:
+      - "8081:8081"
+    depends_on:
+      - redis
+
+  admin-service:
+    build: ./admin-service
+    environment:
+      - FLAGS_SERVICE_URL=http://flags-service:8081
+      - AUDIT_SERVICE_URL=http://audit-service:8084
+    ports:
+      - "8082:8082"
+    depends_on:
+      - flags-service
+      - audit-service
+
+  sdk-service:
+    build: ./sdk-service
+    environment:
+      - REDIS_URL=redis://redis:6379
+    ports:
+      - "8083:8083"
+    depends_on:
+      - redis
+
+  audit-service:
+    build: ./audit-service
+    environment:
+      # Uses .env or default Supabase Session pooler (aws-1-ap-south-1). Fallback: local postgres service.
+      DATABASE_URL: ${DATABASE_URL:-postgresql://postgres.gbfvezbdkiumqocnpgcf:NaitikJain1@aws-1-ap-south-1.pooler.supabase.com:5432/postgres?sslmode=require}
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
+    ports:
+      - "8084:8084"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "8080:80"
+    depends_on:
+      - admin-service
+      - audit-service
+
+volumes:
+  audit_pg_data:

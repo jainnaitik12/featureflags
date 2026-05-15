@@ -1,0 +1,49 @@
+namespace: featureflags
+
+admin-service:
+  image:
+    repository: featureflags-admin-service
+    tag: dev
+
+flags-service:
+  image:
+    repository: featureflags-flags-service
+    tag: dev
+
+sdk-service:
+  image:
+    repository: featureflags-sdk-service
+    tag: dev
+
+audit-service:
+  image:
+    repository: featureflags-audit-service
+    tag: dev
+
+frontend:
+  image:
+    repository: featureflags-frontend
+    tag: dev
+
+redis:
+  image:
+    repository: redis
+    tag: 7-alpine
+
+service:
+  frontendPort: 80
+  flagsPort: 8081
+  adminPort: 8082
+  sdkPort: 8083
+  auditPort: 8084
+  redisPort: 6379
+
+env:
+  redisUrl: redis://redis:6379
+  databaseUrl: "postgresql://postgres.gbfvezbdkiumqocnpgcf:NaitikJain1@aws-1-ap-south-1.pooler.supabase.com:5432/postgres?sslmode=require"
+  redisPassword: your_redis_password_here
+
+ingress:
+  enabled: true
+  className: nginx
+  host: featureflags.local

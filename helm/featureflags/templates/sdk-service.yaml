@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sdk-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sdk-service
+  template:
+    metadata:
+      labels:
+        app: sdk-service
+    spec:
+      containers:
+        - name: sdk-service
+          image: "{{ (index .Values "sdk-service").image.repository }}:{{ (index .Values "sdk-service").image.tag }}"
+          ports:
+            - containerPort: {{ .Values.service.sdkPort }}
+          env:
+            - name: REDIS_URL
+              value: {{ .Values.env.redisUrl | quote }}
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: {{ .Values.service.sdkPort }}
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: {{ .Values.service.sdkPort }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sdk-service
+spec:
+  selector:
+    app: sdk-service
+  ports:
+    - port: {{ .Values.service.sdkPort }}
+      targetPort: {{ .Values.service.sdkPort }}

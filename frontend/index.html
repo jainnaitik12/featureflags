@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Feature Flags Dashboard</title>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <div class="container">
+    <h1>Feature Flags</h1>
+    <p class="muted">Manage flags and review recent audit events.</p>
+
+    <div class="row">
+      <input id="flagName" type="text" placeholder="New flag name" />
+      <label><input id="flagEnabled" type="checkbox" /> Enabled</label>
+      <button type="button" class="btn-create" id="btnCreate">Create Flag</button>
+      <span id="status" class="muted"></span>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Enabled</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="flagsTable"></tbody>
+    </table>
+
+    <h2>Audit Log (Last 50)</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Time</th>
+          <th>Flag</th>
+          <th>Action</th>
+          <th>Old</th>
+          <th>New</th>
+        </tr>
+      </thead>
+      <tbody id="auditTable"></tbody>
+    </table>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

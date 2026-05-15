@@ -1,0 +1,71 @@
+name: ci
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service: [flags-service, admin-service, sdk-service, audit-service]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.23"
+      - name: Run tests
+        run: |
+          cd ${{ matrix.service }}
+          go test ./...
+
+  build-and-push:
+    runs-on: ubuntu-latest
+    needs: test
+    strategy:
+      matrix:
+        service: [flags-service, admin-service, sdk-service, audit-service, frontend]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and push image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./${{ matrix.service }}
+          push: true
+          tags: ghcr.io/GITHUB_USERNAME/featureflags-${{ matrix.service }}:${{ github.sha }}
+
+  update-helm-tags:
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Update image tags in Helm values
+        run: |
+          SHA=${{ github.sha }}
+          sed -i "s|tag: .* # flags-service|tag: ${SHA} # flags-service|g" helm/featureflags/values.yaml
+          sed -i "s|tag: .* # admin-service|tag: ${SHA} # admin-service|g" helm/featureflags/values.yaml
+          sed -i "s|tag: .* # sdk-service|tag: ${SHA} # sdk-service|g" helm/featureflags/values.yaml
+          sed -i "s|tag: .* # audit-service|tag: ${SHA} # audit-service|g" helm/featureflags/values.yaml
+          sed -i "s|tag: .* # frontend|tag: ${SHA} # frontend|g" helm/featureflags/values.yaml
+      - name: Commit and push updated tags
+        run: |
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git add helm/featureflags/values.yaml
+          git diff --cached --quiet && exit 0
+          git commit -m "ci: update image tags [skip ci]"
+          git push

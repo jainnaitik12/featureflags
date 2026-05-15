@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: admin-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: admin-service
+  template:
+    metadata:
+      labels:
+        app: admin-service
+    spec:
+      containers:
+        - name: admin-service
+          image: "{{ (index .Values "admin-service").image.repository }}:{{ (index .Values "admin-service").image.tag }}"
+          ports:
+            - containerPort: {{ .Values.service.adminPort }}
+          env:
+            - name: FLAGS_SERVICE_URL
+              value: "http://flags-service:{{ .Values.service.flagsPort }}"
+            - name: AUDIT_SERVICE_URL
+              value: "http://audit-service:{{ .Values.service.auditPort }}"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: {{ .Values.service.adminPort }}
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: {{ .Values.service.adminPort }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: admin-service
+spec:
+  selector:
+    app: admin-service
+  ports:
+    - port: {{ .Values.service.adminPort }}
+      targetPort: {{ .Values.service.adminPort }}

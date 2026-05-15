@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flags-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: flags-service
+  template:
+    metadata:
+      labels:
+        app: flags-service
+    spec:
+      containers:
+        - name: flags-service
+          image: "{{ (index .Values "flags-service").image.repository }}:{{ (index .Values "flags-service").image.tag }}"
+          ports:
+            - containerPort: {{ .Values.service.flagsPort }}
+          env:
+            - name: REDIS_URL
+              value: {{ .Values.env.redisUrl | quote }}
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: {{ .Values.service.flagsPort }}
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: {{ .Values.service.flagsPort }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: flags-service
+spec:
+  selector:
+    app: flags-service
+  ports:
+    - port: {{ .Values.service.flagsPort }}
+      targetPort: {{ .Values.service.flagsPort }}
