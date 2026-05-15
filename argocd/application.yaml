@@ -6,7 +6,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/GITHUB_USERNAME/featureflags.git
+    repoURL: https://github.com/jainnaitik12/featureflags.git
     targetRevision: main
     path: helm/featureflags
   destination:

@@ -44,7 +44,7 @@ jobs:
         with:
           context: ./${{ matrix.service }}
           push: true
-          tags: ghcr.io/GITHUB_USERNAME/featureflags-${{ matrix.service }}:${{ github.sha }}
+          tags: ghcr.io/jainnaitik12/featureflags-${{ matrix.service }}:${{ github.sha }}
 
   update-helm-tags:
     runs-on: ubuntu-latest

@@ -16,3 +16,4 @@ type ToggleEvent struct {
 	NewValue  bool      `json:"new_value"`
 	ChangedAt time.Time `json:"changed_at"`
 }
+//changes test
